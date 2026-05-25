@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Inventario Mudanza</title>
+<style>
+:root{
+  --blue:#2563eb;--blue-light:#eff6ff;--blue-dark:#1d4ed8;
+  --green:#16a34a;--green-light:#f0fdf4;
+  --red:#dc2626;--red-light:#fef2f2;
+  --amber:#d97706;--amber-light:#fffbeb;
+  --g1:#f8f9fa;--g2:#f1f3f5;--g3:#e9ecef;--g4:#dee2e6;
+  --g5:#adb5bd;--g6:#6c757d;--g7:#495057;--g8:#343a40;--g9:#212529;
+  --r:14px;--rs:10px;--rx:7px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--g2);color:var(--g9);font-size:16px}
+
+.topbar{background:var(--blue);padding:16px 16px 14px;display:flex;align-items:center;gap:12px}
+.topbar-icon{width:38px;height:38px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 14px 6px}
+.stat{background:#fff;border-radius:var(--rs);padding:12px 8px 10px;text-align:center;border:1px solid var(--g3)}
+.stat-icon{font-size:18px;margin-bottom:4px}
+.stat-val{font-size:20px;font-weight:700;color:var(--g9);line-height:1}
+.stat-label{font-size:11px;color:var(--g5);margin-top:3px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em}
+
+.tab-nav{display:grid;grid-template-columns:1fr 1fr;margin:12px 14px 0;background:var(--g3);border-radius:var(--rs);padding:3px;gap:3px}
+.tab-btn{padding:10px 8px;font-size:14px;border:none;background:transparent;color:var(--g6);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:600;border-radius:8px;transition:all 0.18s}
+.tab-btn.active{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+
+.section{padding:14px}
+.card{background:#fff;border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid var(--g3)}
+.card-title{font-size:12px;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px}
+
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:13px;color:var(--g7);font-weight:600;margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;font-size:16px;padding:13px 14px;
+  border:1.5px solid var(--g4);border-radius:var(--rs);
+  background:#fff;color:var(--g9);
+  -webkit-appearance:none;appearance:none;outline:none;
+  transition:border-color 0.15s,box-shadow 0.15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.12)
+}
+.field textarea{resize:none;height:80px;line-height:1.55}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* PHOTO ZONE - usando label como wrapper para garantizar click en móvil */
+.photo-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.photo-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px 8px;border:1.5px solid var(--g4);border-radius:var(--rs);background:var(--g1);cursor:pointer;text-align:center;font-size:13px;color:var(--g7);font-weight:600;min-height:70px}
+.photo-btn:active{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.photo-btn svg{color:var(--g5)}
+.photo-btn:active svg{color:var(--blue)}
+/* input file oculto pero funcional vinculado al label */
+.file-input-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.thumb-wrap{position:relative;aspect-ratio:1;border-radius:var(--rx);overflow:hidden;border:1px solid var(--g3)}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb-del{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:15px;line-height:1}
+
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.btn{width:100%;padding:15px;border-radius:var(--rs);border:1.5px solid var(--g4);background:#fff;cursor:pointer;font-size:15px;color:var(--g8);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;transition:all 0.15s;-webkit-appearance:none}
+.btn:active{opacity:0.85}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-export{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:17px;border-radius:var(--rs);background:var(--green);color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;-webkit-appearance:none;letter-spacing:-0.2px}
+.btn-export:active{opacity:0.85}
+
+.box-card{background:#fff;margin:0 14px 10px;border-radius:var(--r);border:1px solid var(--g3);overflow:hidden}
+.box-card-head{background:var(--blue-light);padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--g3)}
+.box-num-badge{min-width:46px;height:46px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#fff;flex-shrink:0}
+.box-head-info{flex:1;min-width:0}
+.box-cat{font-size:16px;font-weight:700;color:var(--g9);margin-bottom:1px}
+.box-date{font-size:12px;color:var(--g5)}
+.btn-del{width:36px;height:36px;border-radius:8px;background:var(--red-light);border:1px solid #fca5a5;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--red);flex-shrink:0;font-size:18px}
+.btn-del:active{background:#fee2e2}
+.box-body{padding:12px 14px}
+.box-desc{font-size:14px;color:var(--g7);line-height:1.5;margin-bottom:10px}
+.box-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.chip{font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600}
+.chip-blue{background:var(--blue-light);color:var(--blue)}
+.chip-green{background:var(--green-light);color:var(--green)}
+.chip-amber{background:var(--amber-light);color:var(--amber)}
+.chip-red{background:var(--red-light);color:var(--red)}
+.chip-gray{background:var(--g2);color:var(--g6)}
+.box-obs{font-size:12px;color:var(--g6);background:var(--g1);border-radius:var(--rx);padding:7px 10px;margin-bottom:8px;border:1px solid var(--g3)}
+.mini-thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.mini-thumb{width:52px;height:52px;border-radius:var(--rx);object-fit:cover;border:1px solid var(--g3);display:block}
+
+.empty{text-align:center;padding:3.5rem 1rem;color:var(--g5)}
+.empty p{font-size:15px;font-weight:500;margin-top:12px}
+
+/* AVISO de almacenamiento */
+.storage-warn{margin:0 14px 10px;padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--rs);font-size:13px;color:#92400e;display:none}
+.storage-warn.show{display:block}
+
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--g9);color:#fff;padding:12px 22px;
+  border-radius:24px;font-size:14px;font-weight:600;
+  opacity:0;transition:all 0.25s;pointer-events:none;z-index:999;
+  white-space:nowrap;max-width:90vw;text-align:center
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+  </div>
+  <div>
+    <div style="color:#fff;font-weight:700;font-size:18px;letter-spacing:-0.3px">Inventario mudanza</div>
+    <div style="color:rgba(255,255,255,0.75);font-size:12px">Ottawa → Bogotá</div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div class="stat">
+    <div class="stat-icon">📦</div>
+    <div class="stat-val" id="s-boxes">0</div>
+    <div class="stat-label">Cajas</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">🔢</div>
+    <div class="stat-val" id="s-items">0</div>
+    <div class="stat-label">Artículos</div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">💰</div>
+    <div class="stat-val" id="s-val">$0</div>
+    <div class="stat-label">Valor</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-nav">
+  <button class="tab-btn active" id="btn-form" onclick="switchTab('form')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nueva caja
+  </button>
+  <button class="tab-btn" id="btn-list" onclick="switchTab('list')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Ver cajas
+  </button>
+</div>
+
+<!-- ══════ FORM TAB ══════ -->
+<div id="tab-form">
+  <div class="section">
+
+    <!-- Inputs ocultos para fotos - vinculados a labels via for/id -->
+    <input class="file-input-hidden" type="file" id="input-camera" accept="image/*" capture="environment" multiple onchange="handlePhotos(this)">
+    <input class="file-input-hidden" type="file" id="input-gallery" accept="image/*" multiple onchange="handlePhotos(this)">
+
+    <div class="card">
+      <div class="card-title">Datos de la caja</div>
+      <div class="field-row" style="margin-bottom:14px">
+        <div class="field" style="margin:0">
+          <label for="f-num">N° de caja</label>
+          <input type="number" id="f-num" inputmode="numeric" placeholder="1" min="1"
+                 style="text-align:center;font-size:24px;font-weight:700;color:var(--blue);padding:10px">
+        </div>
+        <div class="field" style="margin:0">
+          <label for="f-status">Estado</label>
+          <select id="f-status">
+            <option value="Bueno">✅ Bueno</option>
+            <option value="Regular">⚠️ Regular</option>
+            <option value="Malo">❌ Malo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-cat">Categoría</label>
+        <select id="f-cat">
+          <option value="">— Seleccionar —</option>
+          <option value="Cocina">🍳 Cocina</option>
+          <option value="Sala / Comedor">🛋️ Sala / Comedor</option>
+          <option value="Habitación principal">🛏️ Habitación principal</option>
+          <option value="Habitación 2">🛏️ Habitación 2</option>
+          <option value="Habitación 3">🛏️ Habitación 3</option>
+          <option value="Baño">🚿 Baño</option>
+          <option value="Oficina / Estudio">💼 Oficina / Estudio</option>
+          <option value="Libros">📚 Libros</option>
+          <option value="Ropa">👕 Ropa</option>
+          <option value="Electrónica">💻 Electrónica</option>
+          <option value="Varios">📦 Varios</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-desc">Descripción del contenido</label>
+        <textarea id="f-desc" placeholder="Ej: Vajilla, ollas, sartenes, utensilios de cocina…"></textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field" style="margin:0">
+          <label for="f-qty">Cantidad de artículos</label>
+          <input type="number" id="f-qty" inputmode="numeric" placeholder="0" min="0">
+        </div>
+        <div class="field" style="margin:0">
+          <label for="f-val">Valor aprox. (COP)</label>
+          <input type="number" id="f-val" inputmode="numeric" placeholder="0" min="0">
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:14px;margin-bottom:0">
+        <label for="f-obs">Observaciones</label>
+        <input type="text" id="f-obs" placeholder="Ej: Frágil, pesado, confidencial…">
+      </div>
+    </div>
+
+    <!-- FOTOS -->
+    <div class="card">
+      <div class="card-title">Fotos de la caja</div>
+      <div class="photo-btns">
+        <!-- label for= es lo que realmente dispara el input en móvil -->
+        <label for="input-camera" class="photo-btn">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Tomar foto
+        </label>
+        <label for="input-gallery" class="photo-btn">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Galería
+        </label>
+      </div>
+      <div class="thumb-grid" id="photo-preview"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="clearForm()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Limpiar
+      </button>
+      <button class="btn btn-primary" onclick="saveBox()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Guardar caja
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════ LIST TAB ══════ -->
+<div id="tab-list" style="display:none">
+  <div style="padding:14px 14px 6px">
+    <button class="btn-export" onclick="exportCSV()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Descargar como Excel / CSV
+    </button>
+    <p style="text-align:center;font-size:11px;color:var(--g5);margin-top:6px">Abre en Excel, Numbers o Google Sheets</p>
+  </div>
+
+  <div class="storage-warn" id="storage-warn">
+    ⚠️ Tu navegador no permite guardar datos localmente. Las cajas se perderán si cierras esta página. Exporta frecuentemente.
+  </div>
+
+  <div style="padding:2px 14px 4px;font-size:12px;color:var(--g5);font-weight:600;text-transform:uppercase;letter-spacing:0.05em" id="list-header"></div>
+  <div id="list-container"></div>
+  <div style="height:30px"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+let boxes = [];
+let currentPhotos = [];
+let storageOk = true;
+
+// Cargar datos guardados
+try {
+  const saved = localStorage.getItem('mudanza_v4');
+  if (saved) boxes = JSON.parse(saved);
+} catch(e) {
+  storageOk = false;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(t) {
+  const isForm = t === 'form';
+  document.getElementById('tab-form').style.display = isForm ? 'block' : 'none';
+  document.getElementById('tab-list').style.display = isForm ? 'none' : 'block';
+  document.getElementById('btn-form').classList.toggle('active', isForm);
+  document.getElementById('btn-list').classList.toggle('active', !isForm);
+  if (!isForm) {
+    renderList();
+    if (!storageOk) document.getElementById('storage-warn').classList.add('show');
+  }
+}
+
+// ── FOTOS ─────────────────────────────────────────────────────────────────────
+function handlePhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  let loaded = 0;
+  files.forEach(f => {
+    // Reducir tamaño de imagen antes de guardar para no saturar localStorage
+    const img = new Image();
+    const url = URL.createObjectURL(f);
+    img.onload = function() {
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        const ratio = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      URL.revokeObjectURL(url);
+      currentPhotos.push(dataUrl);
+      loaded++;
+      if (loaded === files.length) renderPreviews();
+    };
+    img.onerror = function() { loaded++; URL.revokeObjectURL(url); };
+    img.src = url;
+  });
+  // Limpiar el input para que se pueda volver a seleccionar el mismo archivo
+  input.value = '';
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('photo-preview');
+  if (!currentPhotos.length) { grid.innerHTML = ''; return; }
+  grid.style.marginTop = '10px';
+  grid.innerHTML = currentPhotos.map((src, i) => `
+    <div class="thumb-wrap">
+      <img src="${src}" alt="Foto ${i+1}" loading="lazy">
+      <button class="thumb-del" onclick="removePhoto(${i})" type="button">✕</button>
+    </div>`).join('');
+}
+
+function removePhoto(i) {
+  currentPhotos.splice(i, 1);
+  renderPreviews();
+}
+
+// ── FORMULARIO ────────────────────────────────────────────────────────────────
+function clearForm() {
+  document.getElementById('f-num').value = '';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-qty').value = '';
+  document.getElementById('f-val').value = '';
+  document.getElementById('f-obs').value = '';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-status').value = 'Bueno';
+  currentPhotos = [];
+  renderPreviews();
+}
+
+function saveBox() {
+  const numVal = document.getElementById('f-num').value.trim();
+  const descVal = document.getElementById('f-desc').value.trim();
+  if (!numVal) { toast('Ingresa el número de caja', 'err'); return; }
+  if (!descVal) { toast('Ingresa una descripción del contenido', 'err'); return; }
+
+  const box = {
+    id: Date.now(),
+    num: parseInt(numVal),
+    cat: document.getElementById('f-cat').value || 'Varios',
+    desc: descVal,
+    qty: parseInt(document.getElementById('f-qty').value) || 0,
+    val: parseInt(document.getElementById('f-val').value) || 0,
+    status: document.getElementById('f-status').value.replace(/^[✅⚠️❌]\s*/u, ''),
+    obs: document.getElementById('f-obs').value.trim(),
+    photos: [...currentPhotos],
+    date: new Date().toLocaleDateString('es-CO')
+  };
+
+  boxes.push(box);
+  boxes.sort((a, b) => a.num - b.num);
+  persist();
+  updateSummary();
+
+  const next = box.num + 1;
+  clearForm();
+  document.getElementById('f-num').value = next;
+  toast('Caja #' + box.num + ' guardada ✓', 'ok');
+}
+
+// ── LISTA ─────────────────────────────────────────────────────────────────────
+function deleteBox(id) {
+  if (!confirm('¿Eliminar esta caja?')) return;
+  boxes = boxes.filter(b => b.id !== id);
+  persist();
+  updateSummary();
+  renderList();
+}
+
+function renderList() {
+  const c = document.getElementById('list-container');
+  const h = document.getElementById('list-header');
+  if (!boxes.length) {
+    h.textContent = '';
+    c.innerHTML = `<div class="empty">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" style="margin:0 auto;display:block;opacity:0.35"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <p>Sin cajas registradas aún</p>
+    </div>`;
+    return;
+  }
+  h.textContent = boxes.length + ' caja' + (boxes.length !== 1 ? 's' : '') + ' registrada' + (boxes.length !== 1 ? 's' : '');
+  c.innerHTML = boxes.map(b => {
+    const sc = b.status === 'Bueno' ? 'chip-green' : b.status === 'Regular' ? 'chip-amber' : 'chip-red';
+    const si = b.status === 'Bueno' ? '✅' : b.status === 'Regular' ? '⚠️' : '❌';
+    const thumbs = b.photos.slice(0, 4).map(s =>
+      `<img class="mini-thumb" src="${s}" alt="" loading="lazy">`).join('');
+    const more = b.photos.length > 4
+      ? `<div style="width:52px;height:52px;border-radius:7px;background:var(--g2);border:1px solid var(--g3);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--g6);font-weight:600">+${b.photos.length-4}</div>`
+      : '';
+    return `<div class="box-card">
+      <div class="box-card-head">
+        <div class="box-num-badge">#${b.num}</div>
+        <div class="box-head-info">
+          <div class="box-cat">${b.cat}</div>
+          <div class="box-date">${b.date}${b.photos.length ? ' · ' + b.photos.length + ' foto' + (b.photos.length !== 1 ? 's' : '') : ''}</div>
+        </div>
+        <button class="btn-del" onclick="deleteBox(${b.id})" type="button" title="Eliminar">🗑</button>
+      </div>
+      <div class="box-body">
+        <div class="box-desc">${escHtml(b.desc.length > 100 ? b.desc.slice(0,100)+'…' : b.desc)}</div>
+        <div class="box-chips">
+          <span class="chip ${sc}">${si} ${b.status}</span>
+          ${b.qty ? `<span class="chip chip-blue">📦 ${b.qty} art.</span>` : ''}
+          ${b.val ? `<span class="chip chip-gray">💵 $${b.val.toLocaleString('es-CO')}</span>` : ''}
+        </div>
+        ${b.obs ? `<div class="box-obs">💬 ${escHtml(b.obs)}</div>` : ''}
+        ${b.photos.length ? `<div class="mini-thumbs">${thumbs}${more}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PERSISTENCIA ──────────────────────────────────────────────────────────────
+function persist() {
+  try {
+    localStorage.setItem('mudanza_v4', JSON.stringify(boxes));
+    storageOk = true;
+  } catch(e) {
+    storageOk = false;
+    document.getElementById('storage-warn').classList.add('show');
+  }
+}
+
+function updateSummary() {
+  document.getElementById('s-boxes').textContent = boxes.length;
+  document.getElementById('s-items').textContent = boxes.reduce((s,b)=>s+b.qty,0).toLocaleString('es-CO');
+  const v = boxes.reduce((s,b)=>s+b.val,0);
+  document.getElementById('s-val').textContent =
+    v >= 1000000 ? '$'+(v/1000000).toFixed(1)+'M' :
+    v >= 1000    ? '$'+Math.round(v/1000)+'K' : '$'+v;
+}
+
+// ── EXPORT CSV (compatible 100% con todos los navegadores y móviles) ───────────
+function exportCSV() {
+  if (!boxes.length) { toast('No hay cajas para exportar', 'err'); return; }
+
+  const BOM = '\uFEFF'; // para que Excel abra UTF-8 correctamente
+  const headers = ['N° Caja','Categoría','Descripción del contenido',
+                   'Cant. artículos','Valor (COP)','Estado',
+                   'Observaciones','Fecha registro','N° fotos'];
+
+  const rows = boxes.map(b => [
+    b.num, b.cat, b.desc, b.qty, b.val, b.status, b.obs, b.date, b.photos.length
+  ]);
+
+  const totalQty = boxes.reduce((s,b)=>s+b.qty,0);
+  const totalVal = boxes.reduce((s,b)=>s+b.val,0);
+  const totRow   = ['TOTAL','','',totalQty,totalVal,'','','',''];
+
+  const csvContent = BOM + [headers, ...rows, totRow]
+    .map(row => row.map(cell => {
+      const s = String(cell === null || cell === undefined ? '' : cell);
+      // Envolver en comillas si contiene coma, comillas o salto de línea
+      return (s.includes(',') || s.includes('"') || s.includes('\n'))
+        ? '"' + s.replace(/"/g, '""') + '"'
+        : s;
+    }).join(','))
+    .join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const fecha = new Date().toLocaleDateString('es-CO').replace(/\//g,'-');
+  a.href     = url;
+  a.download = 'Inventario_Mudanza_' + fecha + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  toast('Archivo descargado ✓', 'ok');
+}
+
+// ── UTILIDADES ────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── INICIO ────────────────────────────────────────────────────────────────────
+updateSummary();
+</script>
+</body>
+</html>
